@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import http from 'axios'
-import CustomInput from './CustomInput'
-import SubmitButton from './SubmitButton'
-
+import http from 'axios';
+import CustomInput from './CustomInput';
+import SubmitButton from './SubmitButton';
+import PubSub from 'pubsub-js';
+import TratadorErros from '../classes/TratadorErros'
 class FormularioAutor extends Component {
 
     constructor() {
@@ -17,9 +18,17 @@ class FormularioAutor extends Component {
     enviaForm(evento) {
         evento.preventDefault();
         var autor = { nome: this.state.nome, email: this.state.email, senha: this.state.senha };
+        PubSub.publish('limpa-erros', {});
         http.post('http://cdc-react.herokuapp.com/api/autores', autor)
-            .then(response => this.setState({ lista: response.data }))
-            .catch(err => console.log(err));
+            .then(response => {
+                PubSub.publish('atualiza-listagem-autores', response.data);
+                this.setState({nome: '', email: '', senha: ''});
+            }).catch(err => {
+                var resp = err.response.data;
+                if(resp.status === 400) {
+                    new TratadorErros().publicaErros(resp);
+                }
+            });
 
     }
 
@@ -41,8 +50,8 @@ class FormularioAutor extends Component {
             <div className="pure-form pure-form-aligned">
                 <form className="pure-form pure-form-aligned" >
                     <CustomInput id="nome" type="text" name="nome" label="Nome" value={this.state.nome} onChange={this.setNome} />
-                    <CustomInput id="email" type="text" name="email" label="E-Mail" value={this.state.email} onChange={this.setEmail} />
-                    <CustomInput id="senha" type="text" name="senha" label="Senha" value={this.state.senha} onChange={this.setSenha} />
+                    <CustomInput id="email" type="email" name="email" label="E-Mail" value={this.state.email} onChange={this.setEmail} />
+                    <CustomInput id="senha" type="password" name="senha" label="Senha" value={this.state.senha} onChange={this.setSenha} />
 
                     <SubmitButton submitAction={this.enviaForm} label="Gravar" />
                 </form>
@@ -91,13 +100,17 @@ export class AutorBox extends Component {
 
     componentDidMount() {
         http.get('http://cdc-react.herokuapp.com/api/autores')
-            .then(response => this.setState({ lista: response.data }))
+            .then(response => this.setState({ lista: response.data }));
+
+        PubSub.subscribe('atualiza-listagem-autores', (topico, novaListagem) => {
+            this.setState({lista: novaListagem});
+        });
     }
 
     atualizaListagem(novaLista) {
         this.setState({ lista: novaLista });
     }
-    
+
     render() {
         return (
             <div>
