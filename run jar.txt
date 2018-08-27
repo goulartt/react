@@ -1,0 +1,2 @@
+java -jar -Dspring.datasource.password=suaSenhaAqui instalura.jar
+
