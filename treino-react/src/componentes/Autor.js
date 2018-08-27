@@ -22,10 +22,10 @@ class FormularioAutor extends Component {
         http.post('http://cdc-react.herokuapp.com/api/autores', autor)
             .then(response => {
                 PubSub.publish('atualiza-listagem-autores', response.data);
-                this.setState({nome: '', email: '', senha: ''});
+                this.setState({ nome: '', email: '', senha: '' });
             }).catch(err => {
                 var resp = err.response.data;
-                if(resp.status === 400) {
+                if (resp.status === 400) {
                     new TratadorErros().publicaErros(resp);
                 }
             });
@@ -103,7 +103,7 @@ export class AutorBox extends Component {
             .then(response => this.setState({ lista: response.data }));
 
         PubSub.subscribe('atualiza-listagem-autores', (topico, novaListagem) => {
-            this.setState({lista: novaListagem});
+            this.setState({ lista: novaListagem });
         });
     }
 
@@ -113,10 +113,17 @@ export class AutorBox extends Component {
 
     render() {
         return (
+
             <div>
-                <FormularioAutor callbackAtualizaListagem={this.atualizaListagem} />
-                <TabelaAutores lista={this.state.lista} />
+                <div className="header">
+                    <h1>Cadastro de autores</h1>
+                </div>
+                <div className="content" id="content">
+                    <FormularioAutor callbackAtualizaListagem={this.atualizaListagem} />
+                    <TabelaAutores lista={this.state.lista} />
+                </div>
             </div>
+
         );
     }
 }
