@@ -1,18 +1,25 @@
 import React, { Component } from 'react';
-import {Link} from 'react-router-dom';
-import PubSub from 'pubsub-js';
+import { Link } from 'react-router-dom';
+import TimelineApi from '../services/TimelineApi';
 
 export default class Header extends Component {
 
-  pesquisa(event){
-    event.preventDefault();
-    fetch(`http://localhost:8080/api/public/fotos/${this.pesquisa.value}`)
-      .then(response => response.json())
-      .then(fotos => {
-        PubSub.publish('timeline', {fotos});
-      });
-
+  constructor() {
+    super();
+    this.state = { msg: '' };
   }
+
+  componentDidMount() {
+    this.props.store.subscribe(() => {
+      this.setState({ msg: this.props.store.getState().notificacao });
+    });
+  }
+
+  pesquisaInput(event) {
+    event.preventDefault();
+    this.props.store.dispatch(TimelineApi.pesquisa(this.pesquisa.value));
+  }
+
   render() {
     return (
       <header className="header container">
@@ -20,8 +27,8 @@ export default class Header extends Component {
           Instalura
           </h1>
 
-        <form className="header-busca" onSubmit={this.pesquisa.bind(this)}>
-          <input type="text" name="search" placeholder="Pesquisa" className="header-busca-campo" ref={input => this.pesquisa = input}/>
+        <form className="header-busca" onSubmit={this.pesquisaInput.bind(this)}>
+          <input type="text" name="search" placeholder="Pesquisa" className="header-busca-campo" ref={input => this.pesquisa = input} />
           <input type="submit" value="Buscar" className="header-busca-submit" />
         </form>
 
@@ -29,6 +36,7 @@ export default class Header extends Component {
         <nav>
           <ul className="header-nav">
             <li className="header-nav-item">
+              <span>{this.state.msg}</span>
               <Link to="/logout" >
                 Logout
                 </Link>
